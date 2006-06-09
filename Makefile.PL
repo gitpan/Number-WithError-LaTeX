@@ -13,4 +13,4 @@ build_requires 'Test::More'              => '0.47';
 build_requires 'Test::LectroTest'        => '0';
 
 auto_install;
-WriteAll;
+WriteAll(sign=>1);

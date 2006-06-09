@@ -1,5 +1,8 @@
 Revision history for Perl extension Number::WithError::LaTeX.
 
+0.03  Fri Jun  9 2006
+	- Upgraded to Module::Install 0.63.
+
 0.02  Thu Feb  9 11:39:37 2006
 	- original version as uploaded to CPAN
 

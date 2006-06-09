@@ -23,3 +23,4 @@ t/03round.t
 t/04arith.t
 t/05functions.t
 t/06latex.t
+SIGNATURE                                Public-key signature (added by MakeMaker)
