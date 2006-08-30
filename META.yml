@@ -4,7 +4,7 @@ build_requires:
   Test::LectroTest: 0
   Test::More: 0.47
 distribution_type: module
-generated_by: Module::Install version 0.63
+generated_by: Module::Install version 0.64
 license: perl
 name: Number-WithError-LaTeX
 no_index: 
@@ -19,4 +19,4 @@ requires:
   TeX::Encode: 0.4
   perl: 5.8.0
   prefork: 1.00
-version: 0.03
+version: 0.04
