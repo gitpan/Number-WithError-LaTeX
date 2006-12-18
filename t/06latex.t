@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
-
 use strict;
 use Test::More tests => 442;
-
+$|=1;
 use Number::WithError::LaTeX qw/:all/;
 
 my @tests = (
@@ -17,22 +16,19 @@ my @tests = (
 	[3, 10.12312, [123, 0.000001]],
 );
 
-foreach my $constructor (0..3) {
-	print "# constructor $constructor.\n";
+my %constructors = (
+    '->new' => sub { Number::WithError::LaTeX->new(@_) },
+    '->new_big' => sub { Number::WithError::LaTeX->new_big(@_) },
+    'witherror' => sub { witherror(@_) },
+    'witherror_big' => sub { witherror_big(@_) },
+);
+
+foreach my $constructor (sort keys %constructors) {
+	print "# constructor '$constructor'.\n";
+    my $constr_sub = $constructors{$constructor};
 	foreach my $t (@tests) {
 		my $n;
-		if ($constructor == 0) {
-			$n = witherror(@$t);
-		}
-		elsif ($constructor == 1) {
-			$n = Number::WithError::LaTeX->new(@$t);
-		}
-		elsif ($constructor == 2) {
-			$n = witherror_big(@$t);
-		}
-		else {
-			$n = Number::WithError::LaTeX->new_big(@$t);
-		}
+    	$n = $constr_sub->(@$t);
 
 		isa_ok($n, 'Number::WithError::LaTeX');
 		isa_ok($n, 'Number::WithError');
@@ -40,6 +36,7 @@ foreach my $constructor (0..3) {
 		print "# Object: $n\n";
 
 		my $str = $n->latex();
+        print "# --> LaTeX: $str\n";
 		
 		ok(defined($str) && $str ne '', 'latex() returns string');
 		

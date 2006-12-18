@@ -4,7 +4,7 @@ use 5.008;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use base 'Number::WithError';
 
@@ -63,7 +63,7 @@ Unlike C<Number::WithError>, this module requires perl version 5.8 or later.
 
 This module exports the following subroutines on demand. It supports
 the C<:all> Exporter tag to export all of them. The subroutines are
-documented in L<Math::WithError>.
+documented in L<Number::WithError>.
 
 =head2 witherror
 
@@ -125,12 +125,13 @@ sub latex {
 	else {
 		$radix .= '\!';
 	}
+
 	my $enclose = $opt{enclose};
 	$enclose = '' if not defined $enclose;
 	$enclose = '' if _ARRAY0($enclose) and @$enclose != 2;
 	
 	my $str = $self->round();
-	
+
 	my $result;
 	pos($str) = 0;
 	my $p = -1;

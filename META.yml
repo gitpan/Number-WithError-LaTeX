@@ -13,10 +13,9 @@ no_index:
     - t
 requires: 
   Math::BigFloat: 0
-  Math::SymbolicX::Inline: 1.00
-  Number::WithError: 0.02
+  Number::WithError: 0.08
   Params::Util: 0.10
   TeX::Encode: 0.4
   perl: 5.8.0
   prefork: 1.00
-version: 0.04
+version: 0.05

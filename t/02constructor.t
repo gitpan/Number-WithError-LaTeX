@@ -118,159 +118,94 @@ ok( not defined witherror(undef) );
 ok( not defined witherror_big() );
 ok( not defined witherror_big(undef) );
 
+
+sub test_construction_method {
+    my $name = shift;
+    my $is_big = shift;
+    my $constructor = shift;
+    my $cloner = shift;
+    my $test_args = shift;
+
+    foreach (@$test_args) {
+        print "Testing $name with $_->{name}.\n";
+    	my $o = $_->{obj};
+	    my $args = $_->{args};
+    	my $name = $_->{name};
+
+    	my $num = $constructor->(@$args);
+
+	    isa_ok($num, 'Number::WithError::LaTeX');
+	    isa_ok($num->{num}, 'Math::BigFloat') if $is_big;
+    	ok(abs($num->{num}-$o->{num})<1e-24, $name);
+    	ok(@{$num->{errors}} == @{$o->{errors}}, $name. '; number of errors');
+    	foreach (0..$#{$o->{errors}}) {
+	    	my $err = $o->{errors}[$_];
+    		if (ref($err) eq 'ARRAY') {
+			    if ($is_big) {
+			        my $errno = $_;
+                    isa_ok($num->{errors}[$errno][$_], 'Math::BigFloat') for 0..$#{$num->{errors}[$errno]};
+                }
+	    		ok(abs($err->[0]-$num->{errors}[$_][0])<1e-24, $name.'; error '.$_.'-1');
+    			ok(abs($err->[1]-$num->{errors}[$_][1])<1e-24, $name.'; error '.$_.'-2');
+	    	}
+    		else {
+	    		if (not defined $err) {
+		    		ok(not(defined $num->{errors}[$_])||abs($num->{errors}[$_])<1e-24, $name.'; error '.$_);
+    			}
+	    		else {
+				    isa_ok($num->{errors}[$_], 'Math::BigFloat') if $is_big;
+		    		ok(abs($err-$num->{errors}[$_])<1e-24, $name.'; error '.$_);
+    			}
+		    }
+	    }
+    	# test cloning:
+	    my $copy = $cloner->($num);
+    	is($copy, $num, $name . '; cloning');
+	    ok( overload::StrVal($copy) ne overload::StrVal($num), '; ref not equal after cloning');
+    	ok( ''.$copy->{errors} ne ''.$num->{errors}, '; {error} ref not equal after cloning');
+	    foreach (0..$#{$num->{errors}}) {
+		    next if not ref($num->{errors}[$_]) eq 'ARRAY';
+    		ok($num->{errors}[$_] ne $copy->{errors}[$_], $name . "; Error no. $_, reference not equal after cloning");
+	    }
+    }
+
+}
+
 # test new()
-foreach (@test_args) {
-	my $o = $_->{obj};
-	my $args = $_->{args};
-	my $name = $_->{name};
-	my $num = Number::WithError::LaTeX->new(@$args);
-	isa_ok($num, 'Number::WithError::LaTeX');
-	ok(abs($num->{num}-$o->{num})<1e-24, $name);
-	ok(@{$num->{errors}} == @{$o->{errors}}, $name. '; number of errors');
-	foreach (0..$#{$o->{errors}}) {
-		my $err = $o->{errors}[$_];
-		if (ref($err) eq 'ARRAY') {
-			ok(abs($err->[0]-$num->{errors}[$_][0])<1e-24, $name.'; error '.$_.'-1');
-			ok(abs($err->[1]-$num->{errors}[$_][1])<1e-24, $name.'; error '.$_.'-2');
-		}
-		else {
-			if (not defined $err) {
-				ok(not(defined $num->{errors}[$_])||abs($num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-			else {
-				ok(abs($err-$num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-		}
-	}
-	# test cloning:
-	my $copy = $num->new();
-	is($copy, $num, $name . '; cloning');
-	ok( overload::StrVal($copy) ne overload::StrVal($num), '; ref not equal after cloning');
-	ok( ''.$copy->{errors} ne ''.$num->{errors}, '; {error} ref not equal after cloning');
-	foreach (0..$#{$num->{errors}}) {
-		next if not ref($num->{errors}[$_]) eq 'ARRAY';
-		ok($num->{errors}[$_] ne $copy->{errors}[$_], $name . "; Error no. $_, reference not equal after cloning");
-	}
-}
+test_construction_method(
+    "->new()",
+    0, # not a big variant
+    sub {Number::WithError::LaTeX->new(@_)},  # const
+    sub {my $self = shift; $self->new(@_)}, # clone
+    \@test_args
+);
 
-
-# test witherror().
-foreach (@test_args) {
-	my $o = $_->{obj};
-	my $args = $_->{args};
-	my $name = $_->{name};
-	my $num = witherror(@$args);
-	isa_ok($num, 'Number::WithError::LaTeX');
-	ok(abs($num->{num}-$o->{num})<1e-24, $name);
-	ok(@{$num->{errors}} == @{$o->{errors}}, $name. '; number of errors');
-	foreach (0..$#{$o->{errors}}) {
-		my $err = $o->{errors}[$_];
-		if (ref($err) eq 'ARRAY') {
-			ok(abs($err->[0]-$num->{errors}[$_][0])<1e-24, $name.'; error '.$_.'-1');
-			ok(abs($err->[1]-$num->{errors}[$_][1])<1e-24, $name.'; error '.$_.'-2');
-		}
-		else {
-			if (not defined $err) {
-				ok(not(defined $num->{errors}[$_])||abs($num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-			else {
-				ok(abs($err-$num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-		}
-	}
-	# test cloning:
-	my $copy = witherror($num);
-	is($copy, $num, $name . '; cloning');
-	ok( overload::StrVal($copy) ne overload::StrVal($num), '; ref not equal after cloning');
-	ok( ''.$copy->{errors} ne ''.$num->{errors}, '; {error} ref not equal after cloning');
-	foreach (0..$#{$num->{errors}}) {
-		next if not ref($num->{errors}[$_]) eq 'ARRAY';
-		ok($num->{errors}[$_] ne $copy->{errors}[$_], $name . "; Error no. $_, reference not equal after cloning");
-	}
-}
-
-
+# test witherror()
+test_construction_method(
+    "witherror()",
+    0, # not a big variant
+    sub {witherror(@_)},  # const
+    sub {my $self = shift; $self->new(@_);}, # clone
+    \@test_args
+);
 
 # test new_big()
-foreach (@test_args) {
-	my $o = $_->{obj};
-	my $args = $_->{args};
-	my $name = $_->{name};
-	my $num = Number::WithError::LaTeX->new_big(@$args);
-	isa_ok($num, 'Number::WithError::LaTeX');
-	isa_ok($num->{num}, 'Math::BigFloat');
-	ok(abs($num->{num}-$o->{num})<1e-24, $name);
-	ok(@{$num->{errors}} == @{$o->{errors}}, $name. '; number of errors');
-	foreach (0..$#{$o->{errors}}) {
-		my $err = $o->{errors}[$_];
-		if (ref($err) eq 'ARRAY') {
-			my $errno = $_;
-			isa_ok($num->{errors}[$errno][$_], 'Math::BigFloat') for 0..$#{$num->{errors}[$errno]};
-			ok(abs($err->[0]-$num->{errors}[$_][0])<1e-24, $name.'; error '.$_.'-1');
-			ok(abs($err->[1]-$num->{errors}[$_][1])<1e-24, $name.'; error '.$_.'-2');
-		}
-		else {
-			if (not defined $err) {
-				ok(not(defined $num->{errors}[$_])||abs($num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-			else {
-				isa_ok($num->{errors}[$_], 'Math::BigFloat');
-				ok(abs($err-$num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-		}
-	}
-	# test cloning:
-	my $copy = $num->new_big();
-	is($copy, $num, $name . '; cloning');
-	ok( overload::StrVal($copy) ne overload::StrVal($num), '; ref not equal after cloning');
-	ok( ''.$copy->{errors} ne ''.$num->{errors}, '; {error} ref not equal after cloning');
-	foreach (0..$#{$num->{errors}}) {
-		next if not ref($num->{errors}[$_]) eq 'ARRAY';
-		ok($num->{errors}[$_] ne $copy->{errors}[$_], $name . "; Error no. $_, reference not equal after cloning");
-	}
-}
-
-
+test_construction_method(
+    "->new_big()",
+    1, # is big
+    sub {Number::WithError::LaTeX->new_big(@_)},  # const
+    sub {my $self = shift; $self->new_big(@_);}, # clone
+    \@test_args
+);
 
 # test witherror_big()
-foreach (@test_args) {
-	my $o = $_->{obj};
-	my $args = $_->{args};
-	my $name = $_->{name};
-	my $num = witherror_big(@$args);
-	isa_ok($num, 'Number::WithError::LaTeX');
-	isa_ok($num->{num}, 'Math::BigFloat');
-	ok(abs($num->{num}-$o->{num})<1e-24, $name);
-	ok(@{$num->{errors}} == @{$o->{errors}}, $name. '; number of errors');
-	foreach (0..$#{$o->{errors}}) {
-		my $err = $o->{errors}[$_];
-		if (ref($err) eq 'ARRAY') {
-			my $errno = $_;
-			isa_ok($num->{errors}[$errno][$_], 'Math::BigFloat') for 0..$#{$num->{errors}[$errno]};
-			ok(abs($err->[0]-$num->{errors}[$_][0])<1e-24, $name.'; error '.$_.'-1');
-			ok(abs($err->[1]-$num->{errors}[$_][1])<1e-24, $name.'; error '.$_.'-2');
-		}
-		else {
-			if (not defined $err) {
-				ok(not(defined $num->{errors}[$_])||abs($num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-			else {
-				isa_ok($num->{errors}[$_], 'Math::BigFloat');
-				ok(abs($err-$num->{errors}[$_])<1e-24, $name.'; error '.$_);
-			}
-		}
-	}
-	# test cloning:
-	my $copy = witherror_big($num);
-	is($copy, $num, $name . '; cloning');
-	ok( overload::StrVal($copy) ne overload::StrVal($num), '; ref not equal after cloning');
-	ok( ''.$copy->{errors} ne ''.$num->{errors}, '; {error} ref not equal after cloning');
-	foreach (0..$#{$num->{errors}}) {
-		next if not ref($num->{errors}[$_]) eq 'ARRAY';
-		ok($num->{errors}[$_] ne $copy->{errors}[$_], $name . "; Error no. $_, reference not equal after cloning");
-	}
-}
-
+test_construction_method(
+    "witherror_big()",
+    1, # is big
+    sub {witherror_big(@_)},  # const
+    sub {my $self = shift; $self->new_big(@_);}, # clone
+    \@test_args
+);
 
 
 
